@@ -36,7 +36,7 @@ class LianjiaSpider(scrapy.spiders.Spider):
                 '//div[@id="plateList"]//a[@class="level1-item "]'):
             item = SecondHandItem()
             item['city'] = city
-            item['province'] = node.xpath("text()").extract_first()
+            # item['province'] = node.xpath("text()").extract_first()
             meta = {'item': item}
             sublink = node.xpath('@href').extract_first()
             if sublink:
@@ -45,43 +45,48 @@ class LianjiaSpider(scrapy.spiders.Spider):
                     headers=self._headers,
                     meta=meta,
                     callback=self.parse_province_page)
-            break
 
     def parse_province_page(self, response):
         for node in response.xpath(
                 '//div[@class="level2 gio_plate"]//a[@gahref!="plate-nolimit"]'
         ):
-            item = response.meta["item"]
-            item['area'] = node.xpath("text()").extract_first()
+            item = response.meta['item'].copy()
+            # item['area'] = node.xpath("text()").extract_first()
+            meta = {'item': item}
             sublink = node.xpath('@href').extract_first()
             if sublink:
                 yield scrapy.Request(
                     url='{}{}'.format(self._url_root, sublink),
                     headers=self._headers,
-                    meta=response.meta,
+                    meta=meta,
                     callback=self.parse_estate_list)
-            break
 
     def parse_estate_list(self, response):
         for node in response.xpath('//ul[@class="js_fang_list"]/li'):
             # item = response.meta['item'].copy()
             detail_link = node.xpath('a/@href').extract_first()
-            meta = response.meta
-            meta['item']['_id'] = detail_link.split('/')[-1].split('.')[0]
+            item = response.meta['item'].copy()
+            item['_id'] = detail_link.split('/')[-1].split('.')[0]
+            meta = {'item': item}
             yield scrapy.Request(
                 url='{}{}'.format(self._url_root, detail_link),
                 headers=self._headers,
                 meta=meta,
                 callback=self.parse_estate_detail)
-            break
+        next_page = response.xpath(
+            '//div[@class="c-pagination"]/a[@gahref="results_next_page"]/@href'
+        ).extract_first()
+        if next_page:
+            yield scrapy.Request(
+                url='{}{}'.format(self._url_root, next_page),
+                headers=self._headers,
+                meta=response.meta,
+                callback=self.parse_estate_list)
 
     def parse_estate_detail(self, response):
         item = response.meta['item'].copy()
         item['title'] = response.xpath(
             '//h1[@class="header-title"]/text()').extract_first()
-        # item['community'] = response.xpath(
-        #     '//span[@class="maininfo-estate-name"]/a[@gahref="ershoufang_gaiyao_xiaoqu_link"]/text()'
-        # ).extract_first()
         main_price_node = response.xpath(
             '//aside[@class="content-side"]/div[@class="maininfo-price maininfo-item"]'
         )
@@ -106,6 +111,17 @@ class LianjiaSpider(scrapy.spiders.Spider):
         item['build_time'] = main_info_node.xpath(
             'li[@class="main-item u-tr"]//p[@class="u-mt8 u-fz12"]/text()'
         ).extract_first().strip()
+        minor_info_node = response.xpath(
+            '//aside[@class="content-side"]/ul[@class="maininfo-minor maininfo-item"]'
+            '//span[@class="maininfo-estate-name"]')
+        item['province'] = minor_info_node.xpath('a[2]/text()').extract_first()
+        item['area'] = minor_info_node.xpath('a[3]/text()').extract_first()
+        item['community_id'] = minor_info_node.xpath(
+            'a[@gahref="ershoufang_gaiyao_xiaoqu_link"]/@href').extract_first(
+            ).split('/')[-1].split('.')[0]
+        item['community'] = minor_info_node.xpath(
+            'a[@gahref="ershoufang_gaiyao_xiaoqu_link"]/text()').extract_first(
+            )
         basic_info_node = response.xpath(
             '//div[@class="content-main module-tb"]')
         item['structure'] = basic_info_node.xpath(
@@ -117,8 +133,8 @@ class LianjiaSpider(scrapy.spiders.Spider):
         item['decorator'] = basic_info_node.xpath(
             './/div[@class="module-col baseinfo-col3"]//ul[@class="baseinfo-tb"]/'
             'li[2]/span[@class="item-cell"]/text()').extract_first()
-        # item['latitude'] = response.xpath(
-        #     '//div[@id="aroundApp"]/@latitude').extract_first()
-        # item['longitude'] = response.xpath(
-        #     '//div[@id="aroundApp"]/@longitude').extract_first()
+        item['latitude'] = response.xpath(
+            '//div[@id="aroundApp"]/@latitude').extract_first()
+        item['longitude'] = response.xpath(
+            '//div[@id="aroundApp"]/@longitude').extract_first()
         yield item
