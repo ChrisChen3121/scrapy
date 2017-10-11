@@ -1,0 +1,4 @@
+province,city,direction,total_price,area,structure,floor,total_area,community_id,build_time,elevator,avg_price,title,_id,decorator
+浦东,上海,南,370,北蔡,2室1厅1卫,高区/6层,64.53平,,1996年建,暂无数据,57337,厨卫全明，卧室带阳台，地铁直达，光线非常好,,中装
+province,city,direction,total_price,area,structure,floor,total_area,community_id,build_time,elevator,avg_price,title,_id,decorator
+浦东,上海,南,370,北蔡,2室1厅1卫,高区/6层,64.53平,,1996年建,暂无数据,57337,厨卫全明，卧室带阳台，地铁直达，光线非常好,sh4553009,中装
