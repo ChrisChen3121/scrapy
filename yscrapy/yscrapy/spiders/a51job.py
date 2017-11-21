@@ -146,6 +146,8 @@ end
                     job_node.xpath('./span[@class="t3"]/text()').extract())
                 job_item["salary"] = self.__return_if_exist(
                     job_node.xpath('./span[@class="t4"]/text()').extract())
+                job_item["publish_date"] = self.__return_if_exist(
+                    job_node.xpath('./span[@class="t5"]/text()').extract())
                 comb_field_str = self.__return_if_exist(
                     job_node.xpath('./span[@class="t2"]/text()').extract())
                 comb_fields = [field.strip() for field in comb_field_str.split('|')]
