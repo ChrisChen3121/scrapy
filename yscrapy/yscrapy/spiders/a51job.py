@@ -34,8 +34,10 @@ function main(splash, args)
       else
       	page_no = page_no + 1
         next_page:mouse_click()
-        splash:wait(1)
+        splash:wait(3)
       end
+    else
+      return nil
     end
   end
   return pages
