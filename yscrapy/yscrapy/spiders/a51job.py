@@ -98,9 +98,12 @@ class A51jobSpider(scrapy.Spider):
             #     })
 
     def _parse_company_info(self, response):
-        total_available = response.xpath(
-            '//div[@class="dw_page"]//input[@id="hidTotal"]/@value'
-        ).extract_first()
+        try:
+            total_available = int(response.xpath(
+                '//div[@class="dw_page"]//input[@id="hidTotal"]/@value'
+            ).extract_first())
+        except ValueError:
+            return None
         if total_available < 100:
             return None
         company_info = Company()
