@@ -98,7 +98,13 @@ class A51jobSpider(scrapy.Spider):
             #     })
 
     def _parse_company_info(self, response):
+        total_available = response.xpath(
+            '//div[@class="dw_page"]//input[@id="hidTotal"]/@value'
+        ).extract_first()
+        if total_available < 100:
+            return None
         company_info = Company()
+        company_info['total_available'] = total_available
         company_head_node = response.xpath(
             '//div[@class="tHeader tHCop"]/div[starts-with(@class, "in ")]')
         company_info['link'] = response.url
@@ -128,9 +134,6 @@ class A51jobSpider(scrapy.Spider):
         ).extract()
         if len(address_info) > 1:
             company_info['address'] = address_info[1].strip()
-        company_info['total_available'] = response.xpath(
-            '//div[@class="dw_page"]//input[@id="hidTotal"]/@value'
-        ).extract_first()
         return company_info
 
     # def _parse_jobs(self, response):
