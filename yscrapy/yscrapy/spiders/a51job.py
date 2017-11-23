@@ -11,37 +11,38 @@ from yscrapy.a51job_items import Company, JDItem
 class A51jobSpider(scrapy.Spider):
     name = '51job'
     allowed_domains = ['51job.com']
-#     jobs_lua_script = """
-# function main(splash, args)
-#   splash.images_enabled = false
-#   local ok, reason = splash:go(args.url)
-#   if not ok then
-#     return nil
-#   end
-#   local pages = {}
-#   local not_finished = true
-#   local page_no = 1
-#   while not_finished do
-#     pages[page_no] = splash:html()
-#     local page_nav = splash:select_all('.bk a')
-#     local next_page = page_nav[2]
-#     if next_page then
-#       local href = next_page.info().attributes["href"]
-#       local next_page_no = tonumber(string.sub(href, string.find(href, "%d")))
-#     	if page_no == next_page_no then
-#         not_finished = false
-#       else
-#       	page_no = page_no + 1
-#         next_page:mouse_click()
-#         splash:wait(0.5)
-#       end
-#     else
-#       return nil
-#     end
-#   end
-#   return pages
-# end
-#     """
+
+    #     jobs_lua_script = """
+    # function main(splash, args)
+    #   splash.images_enabled = false
+    #   local ok, reason = splash:go(args.url)
+    #   if not ok then
+    #     return nil
+    #   end
+    #   local pages = {}
+    #   local not_finished = true
+    #   local page_no = 1
+    #   while not_finished do
+    #     pages[page_no] = splash:html()
+    #     local page_nav = splash:select_all('.bk a')
+    #     local next_page = page_nav[2]
+    #     if next_page then
+    #       local href = next_page.info().attributes["href"]
+    #       local next_page_no = tonumber(string.sub(href, string.find(href, "%d")))
+    #     	if page_no == next_page_no then
+    #         not_finished = false
+    #       else
+    #       	page_no = page_no + 1
+    #         next_page:mouse_click()
+    #         splash:wait(0.5)
+    #       end
+    #     else
+    #       return nil
+    #     end
+    #   end
+    #   return pages
+    # end
+    #     """
 
     def __init__(self):
         # host = 'www.51job.com'
@@ -58,7 +59,7 @@ class A51jobSpider(scrapy.Spider):
         for node in category_table.xpath('.//a/@href'):
             category_url = node.extract()
             yield scrapy.Request(category_url, callback=self.parse_company)
-            break # TODO: for test
+            break  # TODO: for test
 
     def parse_company(self, response):
         pages_node = response.xpath('//div[@id="cppageno"]')
@@ -70,12 +71,12 @@ class A51jobSpider(scrapy.Spider):
         if match:
             page_no_in_next_page = match.group(1)
             if int(current_page_no) != int(page_no_in_next_page):
-                yield scrapy.Request(next_page_url,
-                                     callback=self.parse_company)
-        for node in response.xpath(
-                '//a[@class="name"]/@href'):
+                yield scrapy.Request(
+                    next_page_url, callback=self.parse_company)
+        for node in response.xpath('//a[@class="name"]/@href'):
             compnay_url = node.extract()
-            compnay_url = re.sub(r'(http:\/\/.+?\/).+(\/.+html)', r'\1all\2', compnay_url)
+            compnay_url = re.sub(r'(http:\/\/.+?\/).+(\/.+html)', r'\1all\2',
+                                 compnay_url)
             if compnay_url not in self._company_urls:
                 self._company_urls.add(compnay_url)
                 yield scrapy.Request(
@@ -122,13 +123,14 @@ class A51jobSpider(scrapy.Spider):
         company_info['description'] = response.xpath(
             '//div[@class="tBorderTop_box"]//p/text()').extract_first().strip(
             )
-        company_info['address'] = response.xpath(
-            '//div[@class="tBorderTop_box bmsg"]//p/span/text()').extract_first(
-            ).strip()
-        total_available = response.xpath(
-            '//div[@class="dw_page"]//input[@id="hidTotal"]/@value').extract_first()
-        if total_available:
-            company_info['total_available'] = total_available
+        address_info = response.xpath(
+            '//div[@class="tBorderTop_box bmsg"]//p[@class="fp"]/text()'
+        ).extract()
+        if len(address_info) > 1:
+            company_info['address'] = address_info[1].strip()
+        company_info['total_available'] = response.xpath(
+            '//div[@class="dw_page"]//input[@id="hidTotal"]/@value'
+        ).extract_first()
         return company_info
 
     # def _parse_jobs(self, response):
