@@ -59,7 +59,6 @@ class A51jobSpider(scrapy.Spider):
         for node in category_table.xpath('.//a/@href'):
             category_url = node.extract()
             yield scrapy.Request(category_url, callback=self.parse_company)
-            break  # TODO: for test
 
     def parse_company(self, response):
         pages_node = response.xpath('//div[@id="cppageno"]')
@@ -67,7 +66,7 @@ class A51jobSpider(scrapy.Spider):
             './ul/li[@class="on"]/text()').extract_first()
         next_page_url = pages_node.xpath(
             './ul/li[@class="bk"]/a/@href').extract()[1]
-        match = re.search("\/p(\d+)\/", next_page_url)
+        match = re.search(r"\/p(\d+)\/", next_page_url)
         if match:
             page_no_in_next_page = match.group(1)
             if int(current_page_no) != int(page_no_in_next_page):
@@ -136,7 +135,10 @@ class A51jobSpider(scrapy.Spider):
             '//div[@class="tBorderTop_box bmsg"]//p[@class="fp"]/text()'
         ).extract()
         if len(address_info) > 1:
-            company_info['address'] = address_info[1].strip()
+            address_info = address_info[1].strip()
+            match = re.search(r"(.+)\s+\(.+\)", address_info)
+            if match:
+                company_info['address'] = match.group(1).strip()
         return company_info
 
     # def _parse_jobs(self, response):
