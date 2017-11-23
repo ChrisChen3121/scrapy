@@ -10,6 +10,7 @@ class Company(scrapy.Item):
     description = scrapy.Field()
     address = scrapy.Field()
     link = scrapy.Field()
+    total_available = scrapy.Field()
 
 class JDItem(scrapy.Item):
     title = scrapy.Field()
